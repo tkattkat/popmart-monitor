@@ -1,7 +1,7 @@
 import { gotScraping } from 'got-scraping';
 const spuId = '675';
 const url = `https://prod-global-api.popmart.com/shop/v1/shop/productDetails?spuId=${spuId}&s=a2a1d39bfbaeb0e247e7c2cd2c6787f3&t=1719257678`;
-const discordWebhookUrl = ''; //webhook go here
+const discordWebhookUrl = 'https://discord.com/api/webhooks/1254905672429080698/dt0KixVUoCC3WvkMSNMrwBFc6vv8DX-kR8T9e4TBO3QE5RAXgT0suG92ovzSvXHdcnba'; //webhook go here
 
 const headers = {
   accept: 'application/json, text/plain, */*',
