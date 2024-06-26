@@ -93,7 +93,7 @@ async function checkStock() {
     console.error('Error checking stock:', error);
   }
 
-  setTimeout(checkStock, 5000);
+  setTimeout(checkStock, 8000);
 }
 
 async function sendDiscordMessage(message, imageUrl) {
