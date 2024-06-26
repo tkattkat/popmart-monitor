@@ -1,4 +1,6 @@
 import { gotScraping } from 'got-scraping';
+import express from 'express';
+
 const spuId = '675';
 const url = `https://prod-global-api.popmart.com/shop/v1/shop/productDetails?spuId=${spuId}&s=a2a1d39bfbaeb0e247e7c2cd2c6787f3&t=1719257678`;
 const discordWebhookUrl = 'https://discord.com/api/webhooks/1254905672429080698/dt0KixVUoCC3WvkMSNMrwBFc6vv8DX-kR8T9e4TBO3QE5RAXgT0suG92ovzSvXHdcnba'; //webhook go here
@@ -29,6 +31,19 @@ const headers = {
   'x-project-id': 'naus',
   'x-sign': 'b86eaec1ad8c417d500f5cf41ab259ce,1719257678',
 };
+
+const app = express();
+const port = process.env.PORT || 3000;
+
+app.get('/', (req, res) => {
+  res.send('Stock checker is running');
+});
+
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
+  // Start the initial check
+  checkStock();
+});
 
 async function checkStock() {
   try {
@@ -109,6 +124,3 @@ async function sendDiscordMessage(message, imageUrl) {
     console.error('Error sending Discord message:', error);
   }
 }
-
-// Start the initial check
-checkStock();
