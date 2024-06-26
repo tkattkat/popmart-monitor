@@ -60,30 +60,18 @@ async function checkStock() {
     let inStock = false;
     let message = '';
 
-    if (
-      wholeSet &&
-      (wholeSet.stock.onlineStock > 0 || wholeSet.stock.onlineLockStock > 0)
-    ) {
+    if (wholeSet && wholeSet.stock.onlineStock > 0) {
       inStock = true;
-      message += `Whole set:\n- Available: ${wholeSet.stock.onlineStock}\n- Locked: ${wholeSet.stock.onlineLockStock}\n\n`;
+      message += `Whole set:\n- Available: ${wholeSet.stock.onlineStock}\n\n`;
     } else {
-      message += `Whole set:\n- Available: ${wholeSet.stock.onlineStock}\n- Locked: ${wholeSet.stock.onlineLockStock}\n\n`;
-
-      console.log(
-        `Whole set is not in stock! Stock: ${wholeSet.stock.onlineStock}, Lock Stock: ${wholeSet.stock.onlineLockStock}`
-      );
+      console.log(`Whole set is not in stock! Stock: ${wholeSet.stock.onlineStock}`);
     }
 
-    if (
-      singleBox &&
-      (singleBox.stock.onlineStock > 0 || singleBox.stock.onlineLockStock > 0)
-    ) {
+    if (singleBox && singleBox.stock.onlineStock > 0) {
       inStock = true;
-      message += `Single box:\n- Available: ${singleBox.stock.onlineStock}\n- Locked: ${singleBox.stock.onlineLockStock}\n`;
+      message += `Single box:\n- Available: ${singleBox.stock.onlineStock}\n`;
     } else {
-      console.log(
-        `Single box is not in stock! Stock: ${singleBox.stock.onlineStock}, Lock Stock: ${singleBox.stock.onlineLockStock}`
-      );
+      console.log(`Single box is not in stock! Stock: ${singleBox.stock.onlineStock}`);
     }
 
     if (inStock) {
