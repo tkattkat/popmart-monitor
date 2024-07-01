@@ -1,8 +1,8 @@
 import { gotScraping } from 'got-scraping';
 import express from 'express';
 
-const spuId = '675';
-const url = `https://prod-global-api.popmart.com/shop/v1/shop/productDetails?spuId=${spuId}&s=a2a1d39bfbaeb0e247e7c2cd2c6787f3&t=1719257678`;
+const spuIds = ['1079', '675'];
+const urls = spuIds.map(id => `https://prod-global-api.popmart.com/shop/v1/shop/productDetails?spuId=${id}&s=a2a1d39bfbaeb0e247e7c2cd2c6787f3&t=1719257678`);
 const discordWebhookUrl = 'https://discord.com/api/webhooks/1254905672429080698/dt0KixVUoCC3WvkMSNMrwBFc6vv8DX-kR8T9e4TBO3QE5RAXgT0suG92ovzSvXHdcnba'; //webhook go here
 
 const headers = {
@@ -41,50 +41,51 @@ app.get('/', (req, res) => {
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
-  // Start the initial check
   checkStock();
 });
 
 async function checkStock() {
   try {
-    const response = await gotScraping({
-      url,
-      headers,
-      responseType: 'json',
-    });
+    for (let i = 0; i < spuIds.length; i++) {
+      const response = await gotScraping({
+        url: urls[i],
+        headers,
+        responseType: 'json',
+      });
 
-    const data = response.body.data;
-    const wholeSet = data.skus.find((sku) => sku.title === 'Whole set');
-    const singleBox = data.skus.find((sku) => sku.title === 'Single box');
+      const data = response.body.data;
+      const wholeSet = data.skus.find((sku) => sku.title === 'Whole set');
+      const singleBox = data.skus.find((sku) => sku.title === 'Single box');
 
-    let inStock = false;
-    let message = '';
+      let inStock = false;
+      let message = `Product ID: ${spuIds[i]}\n\n`;
 
-    if (wholeSet && wholeSet.stock.onlineStock > 0) {
-      inStock = true;
-      message += `Whole set:\n- Available: ${wholeSet.stock.onlineStock}\n\n`;
-    } else {
-      console.log(`Whole set is not in stock! Stock: ${wholeSet.stock.onlineStock}`);
-    }
+      if (wholeSet && wholeSet.stock.onlineStock > 0) {
+        inStock = true;
+        message += `Whole set:\n- Available: ${wholeSet.stock.onlineStock}\n\n`;
+      } else {
+        console.log(`SPU ${spuIds[i]}: Whole set is not in stock! Stock: ${wholeSet?.stock.onlineStock || 0}`);
+      }
 
-    if (singleBox && singleBox.stock.onlineStock > 0) {
-      inStock = true;
-      message += `Single box:\n- Available: ${singleBox.stock.onlineStock}\n`;
-    } else {
-      console.log(`Single box is not in stock! Stock: ${singleBox.stock.onlineStock}`);
-    }
+      if (singleBox && singleBox.stock.onlineStock > 0) {
+        inStock = true;
+        message += `Single box:\n- Available: ${singleBox.stock.onlineStock}\n`;
+      } else {
+        console.log(`SPU ${spuIds[i]}: Single box is not in stock! Stock: ${singleBox?.stock.onlineStock || 0}`);
+      }
 
-    if (inStock) {
-      await sendDiscordMessage(message, data.imageUrl);
+      if (inStock) {
+        await sendDiscordMessage(message, data.imageUrl, data.shareUrl);
+      }
     }
   } catch (error) {
     console.error('Error checking stock:', error);
   }
 
-  setTimeout(checkStock, 8000);
+  setTimeout(checkStock, 10000);
 }
 
-async function sendDiscordMessage(message, imageUrl) {
+async function sendDiscordMessage(message, imageUrl, productUrl) {
   try {
     await gotScraping.post(discordWebhookUrl, {
       json: {
@@ -96,7 +97,7 @@ async function sendDiscordMessage(message, imageUrl) {
             fields: [
               {
                 name: 'Product URL',
-                value: `https://www.popmart.com/us/products/${spuId}/the-monsters-tasty-macarons-vinyl-face-blind-box`,
+                value: productUrl,
               },
             ],
             image: {
@@ -107,8 +108,8 @@ async function sendDiscordMessage(message, imageUrl) {
         ],
       },
     });
-    console.log('Discord message sent successfully');
+    console.log(`Discord message sent successfully for product: ${productUrl}`);
   } catch (error) {
-    console.error('Error sending Discord message:', error);
+    console.error(`Error sending Discord message for product: ${productUrl}`, error);
   }
 }
