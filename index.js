@@ -1,8 +1,8 @@
 import { gotScraping } from 'got-scraping';
 import express from 'express';
 
-const spuIds = ['1079', '675'];
-const urls = spuIds.map(id => `https://prod-global-api.popmart.com/shop/v1/shop/productDetails?spuId=${id}&s=a2a1d39bfbaeb0e247e7c2cd2c6787f3&t=1719257678`);
+const spuId = '1079';
+const url = `https://prod-global-api.popmart.com/shop/v1/shop/productDetails?spuId=${spuId}&s=a2a1d39bfbaeb0e247e7c2cd2c6787f3&t=1719257678`;
 const discordWebhookUrl = 'https://discord.com/api/webhooks/1254905672429080698/dt0KixVUoCC3WvkMSNMrwBFc6vv8DX-kR8T9e4TBO3QE5RAXgT0suG92ovzSvXHdcnba'; //webhook go here
 
 const headers = {
@@ -41,51 +41,50 @@ app.get('/', (req, res) => {
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
+  // Start the initial check
   checkStock();
 });
 
 async function checkStock() {
   try {
-    for (let i = 0; i < spuIds.length; i++) {
-      const response = await gotScraping({
-        url: urls[i],
-        headers,
-        responseType: 'json',
-      });
+    const response = await gotScraping({
+      url,
+      headers,
+      responseType: 'json',
+    });
 
-      const data = response.body.data;
-      const wholeSet = data.skus.find((sku) => sku.title === 'Whole set');
-      const singleBox = data.skus.find((sku) => sku.title === 'Single box');
+    const data = response.body.data;
+    const wholeSet = data.skus.find((sku) => sku.title === 'Whole set');
+    const singleBox = data.skus.find((sku) => sku.title === 'Single box');
 
-      let inStock = false;
-      let message = `Product ID: ${spuIds[i]}\n\n`;
+    let inStock = false;
+    let message = '';
 
-      if (wholeSet && wholeSet.stock.onlineStock > 0) {
-        inStock = true;
-        message += `Whole set:\n- Available: ${wholeSet.stock.onlineStock}\n\n`;
-      } else {
-        console.log(`SPU ${spuIds[i]}: Whole set is not in stock! Stock: ${wholeSet?.stock.onlineStock || 0}`);
-      }
+    if (wholeSet && wholeSet.stock.onlineStock > 0) {
+      inStock = true;
+      message += `Whole set:\n- Available: ${wholeSet.stock.onlineStock}\n\n`;
+    } else {
+      console.log(`Whole set is not in stock! Stock: ${wholeSet.stock.onlineStock}`);
+    }
 
-      if (singleBox && singleBox.stock.onlineStock > 0) {
-        inStock = true;
-        message += `Single box:\n- Available: ${singleBox.stock.onlineStock}\n`;
-      } else {
-        console.log(`SPU ${spuIds[i]}: Single box is not in stock! Stock: ${singleBox?.stock.onlineStock || 0}`);
-      }
+    if (singleBox && singleBox.stock.onlineStock > 0) {
+      inStock = true;
+      message += `Single box:\n- Available: ${singleBox.stock.onlineStock}\n`;
+    } else {
+      console.log(`Single box is not in stock! Stock: ${singleBox.stock.onlineStock}`);
+    }
 
-      if (inStock) {
-        await sendDiscordMessage(message, data.imageUrl, data.shareUrl);
-      }
+    if (inStock) {
+      await sendDiscordMessage(message, data.imageUrl);
     }
   } catch (error) {
     console.error('Error checking stock:', error);
   }
 
-  setTimeout(checkStock, 10000);
+  setTimeout(checkStock, 8000);
 }
 
-async function sendDiscordMessage(message, imageUrl, productUrl) {
+async function sendDiscordMessage(message, imageUrl) {
   try {
     await gotScraping.post(discordWebhookUrl, {
       json: {
@@ -97,7 +96,7 @@ async function sendDiscordMessage(message, imageUrl, productUrl) {
             fields: [
               {
                 name: 'Product URL',
-                value: productUrl,
+                value: `https://www.popmart.com/us/products/1079/crybaby-%C3%97-powerpuff-girls-series-vinyl-face-plush-blind-box`,
               },
             ],
             image: {
@@ -108,8 +107,8 @@ async function sendDiscordMessage(message, imageUrl, productUrl) {
         ],
       },
     });
-    console.log(`Discord message sent successfully for product: ${productUrl}`);
+    console.log('Discord message sent successfully');
   } catch (error) {
-    console.error(`Error sending Discord message for product: ${productUrl}`, error);
+    console.error('Error sending Discord message:', error);
   }
 }
